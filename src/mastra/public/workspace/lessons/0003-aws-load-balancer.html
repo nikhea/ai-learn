@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Modern AWS Load Balancers for AI Engineering</title>
+  <style>
+    body { font-family: 'Georgia', serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+    h1, h2, h3 { color: #2c3e50; }
+    .primary-source { background-color: #f8f9fa; padding: 10px; border-left: 4px solid #3498db; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <h1>Modern AWS Load Balancers for AI Engineering Applications</h1>
+  
+  <h2>Why Load Balancers Matter for AI Applications</h2>
+  <p>As you build AI-powered applications like RAG systems, AI agents, or API-driven machine learning services, ensuring high availability and scalability is crucial. AWS Load Balancers distribute incoming traffic across multiple targets, ensuring your applications remain responsive even under heavy load.</p>
+  
+  <h2>Application Load Balancer (ALB) - The Right Choice for AI Services</h2>
+  <p>The <strong>Application Load Balancer (ALB)</strong> operates at Layer 7 (the request level) and is ideal for HTTP/HTTPS traffic. This makes it perfect for AI applications that expose REST APIs or web interfaces.</p>
+  
+  <div class="primary-source">
+    <h3>Primary Source</h3>
+    <p>According to AWS documentation, "Application Load Balancer operates at the request level (layer 7), routing traffic to targets (EC2 instances, containers, IP addresses, and Lambda functions) based on the content of the request." (<a href="https://aws.amazon.com/elasticloadbalancing/application-load-balancer">AWS Application Load Balancer Documentation</a>)</p>
+  </div>
+  
+  <h2>Key Features for AI Engineering</h2>
+  <ul>
+    <li><strong>Path-based routing:</strong> Route traffic to different AI services based on URL paths (e.g., /api/rag, /api/agent)</li>
+    <li><strong>SSL/TLS termination:</strong> Secure communication for AI APIs</li>
+    <li><strong>Integration with Auto Scaling:</strong> Automatically scale your AI services based on traffic</li>
+    <li><strong>Health checks:</strong> Monitor the health of your AI model endpoints</li>
+  </ul>
+  
+  <h2>Getting Started</h2>
+  <p>To create an ALB:</p>
+  <ol>
+    <li>Create a load balancer in the AWS Management Console or using AWS CLI</li>
+    <li>Configure listeners for HTTP/HTTPS traffic</li>
+    <li>Register your AI service targets (EC2 instances, containers, etc.)</li>
+    <li>Set up health checks to ensure only healthy endpoints receive traffic</li>
+  </ol>
+  
+  <p class="reminder">Remember to ask follow-up questions if anything is unclear. I'm here to help you learn!</p>
+</body>
+</html>

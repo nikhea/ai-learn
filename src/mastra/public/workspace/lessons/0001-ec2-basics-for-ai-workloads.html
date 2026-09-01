@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EC2 Basics for AI Workloads</title>
+    <style>
+        body {
+            font-family: "Georgia", serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #f9f5f0;
+        }
+        h1, h2, h2 {
+            color: #2c3e50;
+            border-bottom: 1px solid #e67e22;
+            padding-bottom: 0.5rem;
+        }
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 1.5rem;
+        }
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 2rem;
+        }
+        p {
+            margin-bottom: 1rem;
+        }
+        .source {
+            background-color: #f1c40f;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            font-style: italic;
+        }
+        .quiz {
+            background-color: #e8f8f5;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 2rem;
+        }
+        .quiz h2 {
+            border: none;
+        }
+        .quiz ul {
+            padding-left: 1.5rem;
+        }
+        .source a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        .source a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>EC2 Basics for AI Workloads</h1>
+    
+    <h2>Introduction</h1>
+    <p>This lesson will introduce you to the fundamentals of Amazon EC2 (Elastic Compute Cloud) as it relates to AI workloads. Understanding EC2 is crucial for deploying AI applications, as it provides the scalable compute resources needed for training models, running inference, and handling AI workloads efficiently.</p>
+    
+    <h2>Key Concepts</h1>
+    
+    <h2>EC2 Instances</h1>
+    <p>EC2 instances are virtual servers that run applications. They come in various types optimized for different workloads:</p>
+    <ul>
+        <li><strong>General Purpose:</strong> Balanced CPU, memory, and networking (e.g., general-purpose instances for web servers, APIs)</li>
+        <li><strong>Compute Optimized:</strong> High CPU performance for batch processing, scientific modeling, and high-performance computing</li>
+        <li><strong>Memory Optimized:</strong> High memory capacity for in-memory databases, large in-memory analytics, and AI workloads requiring large memory footprints</li>
+        <li><strong>Storage Optimized:</strong> High-speed local storage for high-throughput OLTP workloads</li>
+        <li><strong>GPU Optimized:</strong> Powerful GPUs for machine learning training and inference (e.g., p3, p4, g4 instances)</li>
+    
+    <h2>Instance Types</h1>
+    <p>AWS offers over 750 instance types across these categories. For AI workloads, you'll primarily use:</p>
+    <ul>
+        <li><strong>GPU instances:</strong> p3, p4, g4, g5 instances with NVIDIA GPUs</li>
+        <li><strong>General purpose:</strong> m5, m5a, m6i instances for inference and development</li>
+        <li><strong>Memory optimized:</strong> r5, r6g for memory-intensive AI workloads</li>
+    
+    <h2>Practical Steps for AI Workloads</h1>
+    <ol>
+        <li><strong>Choose an appropriate instance type:</strong> For training, select GPU instances (e.g., p3.2xlarge). For inference, consider general purpose or memory-optimized instances.</li>
+        <li><strong>Choose an AMI:</strong> Use a Deep Learning AMI (DL AMI) from AWS Marketplace which comes pre-configured with popular ML frameworks (TensorFlow, PyTorch, etc.)</li>
+        <li><strong>Configure security groups:</th> Allow SSH access (port 22) and any necessary ports for your AI application (e.g., 80 for web services)</li>
+        <li><strong>Configure storage:</th> Use EBS volumes for persistent storage, or instance store for temporary storage (if using spot instances)</li>
+        <li><strong>Configure networking:</th> Use VPC for network isolation and security</li>
+    
+    <div class="source">
+        <strong>Primary Source:</strong> <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html">Amazon EC2 Documentation</a> - Official AWS documentation on EC2 concepts and instance types
+    </div>
+    
+    <h2>Practical Example: Launching a GPU Instance for AI Workloads</h1>
+    <p>Here's a simplified workflow for launching a GPU instance for AI workloads:</p>
+    <ol>
+        <li>Go to the EC2 dashboard in AWS Console</li>
+        <li>Click "Launch Instance"</li>
+        <li>Choose "Deep Learning AMI (Ubuntu) version 2023.x"</li>
+        <li>Select instance type (e.g., p3.2xlarge for GPU workloads)</li>
+        <li>Configure security group to allow SSH (port 22) and any necessary ports</li>
+        <li>Configure storage (EBS volume size based on your needs)</li>
+        <li>Launch the instance and connect via SSH</li>
+        <li>Install and configure your AI framework (e.g., PyTorch, TensorFlow)</li>
+    
+    <div class="source">
+        <strong>Video Resource:</strong> <a href="https://aws.amazon.com/video/watch/a5e9582d8bf">AWS re:Invent 2023 - Amazon EC2 Innovations</a> - Video covering latest EC2 innovations including Graviton 4 and AI-powered tools
+    </div>
+    
+    <div class="quiz">
+        <h2>Quick Quiz</h2>
+        <p>Test your understanding of EC2 basics for AI workloads:</p>
+        <ul>
+            <li>Which EC2 instance type is best suited for GPU-accelerated machine learning training?</li>
+            <li>What type of AMI should you use for AI workloads?</li>
+            <li>What security group rule would you need to allow SSH access to your EC2 instance?</li>
+        </ul>
+        <p><em>Answers:</b> 
+        <ul>
+            <li>GPU instances (e.g., p3, p4, g4, g5)</li>
+            <li>Deep Learning AMI (DL AMI)</li>
+            <li>Allow SSH (port 22) in the security group</li>
+        </ul>
+    </div>
+    
+    <h2>Next Steps</h1>
+    <p>Now that you understand EC2 basics for AI workloads, you can proceed to the next lesson which will cover setting up a basic AI application on EC2.</p>
+</body>
+</html>

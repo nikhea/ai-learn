@@ -1,0 +1,13 @@
+port: 7880
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50100
+  use_external_ip: false # set false + node_ip if fully LAN-local, true if clients connect over the internet
+
+keys:
+  APIupxGEuBSKRco: RIeUak22lzgCVs9d1HvexAVag1dm1KzfeGpBkCNIah4C
+  # devsecret1234567890abcdef1234567890 # replace: livekit-cli generate-keys, or `openssl rand -hex 32`
+
+logging:
+  level: info

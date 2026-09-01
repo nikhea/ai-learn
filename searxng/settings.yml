@@ -1,0 +1,56 @@
+use_default_settings: true
+
+general:
+  debug: false
+  instance_name: "Local SearXNG"
+  privacypolicy_url: false
+  donation_url: false
+  contact_url: false
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "en"
+
+server:
+  secret_key: "changeme-use-a-long-random-string-here"
+  limiter: false # ← CRITICAL: disables the bot-detection that blocks your own queries
+  image_proxy: true
+  port: 8080
+  bind_address: "0.0.0.0"
+
+ui:
+  static_use_hash: true
+  default_locale: "en"
+  theme_args:
+    simple_style: dark
+
+# Outgoing request settings — critical for container networking
+outgoing:
+  request_timeout: 10.0
+  max_request_timeout: 30.0
+  useragent_suffix: ""
+  pool_connections: 100
+  pool_maxsize: 20
+  enable_http2: true
+
+engines:
+  - name: google
+    engine: google
+    shortcut: g
+    timeout: 15.0
+
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+    timeout: 15.0
+
+  - name: bing
+    engine: bing
+    shortcut: b
+    timeout: 15.0
+
+  - name: wikipedia
+    engine: wikipedia
+    shortcut: wp
+    timeout: 15.0

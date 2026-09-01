@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setting Up an EC2 Instance for LLM Inference</title>
+    <style>
+        body {
+            font-family: "Georgia", serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #f9f5f0;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+            border-bottom: 1px solid #e67e22;
+            padding-bottom: 0.5rem;
+        }
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 1.5rem;
+        }
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 2rem;
+        }
+        h3 {
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        p {
+            margin-bottom: 1rem;
+        }
+        .source {
+            background-color: #f1c40f;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            font-style: italic;
+        }
+        .source a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        .source a:hover {
+            text-decoration: underline;
+        }
+        .steps {
+            background-color: #e8f4f1;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+        .quiz {
+            background-color: #e8f8f5;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 2rem;
+        }
+        .quiz h2 {
+            border: none;
+        }
+        .quiz ul {
+            padding-left: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Setting Up an EC2 Instance for LLM Inference</h1>
+    
+    <h2>Introduction</h1>
+    <p>In this lesson, you'll learn how to set up an EC2 instance specifically configured for running LLM inference. This is a critical step toward building your LLM-powered application as outlined in your mission.</p>
+    
+    <h2>Prerequisites</h1>
+    <p>Before proceeding, ensure you have:</p>
+    <ul>
+        <li>An AWS account with appropriate permissions</li>
+        <li>Basic familiarity with AWS EC2 (covered in the previous lesson)</li>
+        <li>SSH client installed (e.g., OpenSSH on Linux/macOS or PuTTY on Windows)</li>
+    </ul>
+    
+    <h2>Step-by-Step Guide</h2>
+    
+    <div class="steps">
+        <h3>Step 1: Choose the Right Instance Type</h3>
+        <p>For LLM inference, you'll want a balance of CPU, memory, and networking performance. Recommended instance types include:</p>
+        <ul>
+            <li>General Purpose: m6g.large or m6g.xlarge (ARM-based, cost-effective)</li>
+            <li>Compute Optimized: c6g.large (for CPU-intensive inference)</li>
+            <li>Memory Optimized: r6g.large (for larger models requiring more memory)</li>
+        </ul>
+        <p>For most LLM applications, the m6g.large instance type is a good starting point.</p>
+    </div>
+    
+    <div class="steps">
+        <h3>Step 2: Select a Deep Learning AMI</h3>
+        <p>AWS provides Deep Learning AMIs (DL AMIs) that come pre-configured with popular ML frameworks. For LLM inference, you'll want to select one of these:</p>
+        <ul>
+            <li>Deep Learning AMI (Ubuntu) Version 2023.03.x or later</li>
+            <li>Deep Learning AMI (Ubuntu) with PyTorch</li>
+            <li>Deep Learning AMI (Ubuntu) with TensorFlow</li>
+        </ul>
+        <p>These AMIs come with CUDA drivers, NVIDIA libraries, and popular ML frameworks pre-installed, saving you configuration time.</p>
+    </div>
+    
+    <div class="steps">
+        <h3>Step 3: Configure Instance Details</h3>
+        <ol>
+            <li>Choose the instance type you selected in Step 1</li>
+            <li>Choose an existing key pair or create a new one for SSH access</li>
+            <li>Configure network settings (VPC, subnet)</li>
+            <li>Add storage (EBS volume size based on your model needs)</li>
+            <li>Configure security group to allow SSH (port 22) and any necessary ports for your application</li>
+        </ol>
+    </div>
+    
+    <div class="steps">
+        <h3>Step 4: Launch the Instance</h3>
+        <p>Review your configuration and click "Launch Instance". AWS will provision the instance and it will be ready to connect via SSH.</p>
+    </div>
+    
+    <div class="steps">
+        <h3>Step 5: Connect to Your Instance</h3>
+        <p>Use SSH to connect to your instance. The command would look something like:</p>
+        <pre>ssh -i your-key.pem ubuntu@<public-ip-address></pre>
+        <p>Once connected, you'll have access to the command line on your EC2 instance.</p>
+    </div>
+    
+    <div class="source">
+        <strong>Primary Source:</strong> <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/launch-wizard.html">AWS EC2 Launch Wizard Documentation</a> - Official guide to launching EC2 instances
+    </div>
+    
+    <h2>Practical Example: Running a Simple LLM Inference</h2>
+    <p>Now that you have an EC2 instance running, let's test it with a simple LLM inference example. We'll use a small open-source LLM model.</p>
+    
+    <ol>
+        <li>Connect to your EC2 instance via SSH</li>
+        <li>Update your package manager: <code>sudo apt update</code></li>
+        <li>Install required dependencies: <code>sudo apt install python3-pip</code></li>
+        <li>Install a lightweight LLM library: <code>pip3 install transformers torch</code></li>
+        <li>Download a small LLM model (e.g., <code>pip install transformers[torch]</code> and use a model like "gpt2")</li>
+        <li>Create a simple Python script to run inference</li>
+    </ol>
+    
+    <pre>
+#!/usr/bin/env python3
+from transformers import pipeline
+
+# Load a small LLM model
+classifier = pipeline("text-generation", model="gpt2")
+
+# Run inference
+result = classifier("Hello, how are you today?", max_length=50)
+print(result[0]['generated_text'])
+    </pre>
+    
+    <p>Save this as <code>llm_inference.py</code> and run it with <code>python3 llm_inference.py</code>.</p>
+    
+    <div class="source">
+        <strong>Video Resource:</strong> <a href="https://aws.amazon.com/video/watch/a5e9582d8bf">AWS re:Invent 2023 - Amazon EC2 Innovations</a> - Video showing EC2 instance types and configurations
+    </div>
+    
+    <div class="quiz">
+        <h2>Quick Quiz</h2>
+        <p>Test your understanding of setting up an EC2 instance for LLM inference:</p>
+        <ul>
+            <li>What are three recommended instance types for LLM inference?</li>
+            <li>What is a Deep Learning AMI and why is it useful for LLM workloads?</li>
+            <li>What security group rule would you need to allow SSH access to your EC2 instance?</li>
+        </ul>
+        <p><em>Answers:</b> 
+        <ul>
+            <li>General Purpose (m6g), Compute Optimized (c6g), Memory Optimized (r6g)</li>
+            <li>A Deep Learning AMI is a pre-configured AMI with ML frameworks (PyTorch, TensorFlow) and CUDA drivers pre-installed</li>
+            <li>Allow SSH (port 22) in the security group</li>
+        </ul>
+    </div>
+    
+    <h2>Next Steps</h1>
+    <p>Now that you have an EC2 instance set up for LLM inference, you can proceed to the next lesson which will cover deploying a simple LLM-powered application.</p>
+</body>
+</html>

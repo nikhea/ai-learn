@@ -1,0 +1,314 @@
+version: "3.9"
+
+services:
+  # =========================================================
+  # CLICKHOUSE KEEPER
+  # =========================================================
+  clickhouse-keeper:
+    image: clickhouse/clickhouse-keeper:latest
+    container_name: clickhouse-keeper
+    restart: unless-stopped
+
+    ports:
+      - "9181:9181"
+
+    volumes:
+      - keeper_data:/var/lib/clickhouse
+      - keeper_logs:/var/log/clickhouse-keeper
+
+    networks:
+      - ai-stack
+
+  # =========================================================
+  # CLICKHOUSE
+  # =========================================================
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    restart: unless-stopped
+
+    depends_on:
+      - clickhouse-keeper
+
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+
+    environment:
+      CLICKHOUSE_DB: mastra
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: adminpassword
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+      - ./clickhouse/config.d/keeper.xml:/etc/clickhouse-server/config.d/keeper.xml:ro
+
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - ai-stack
+
+  # =========================================================
+  # POSTGRES + PGVECTOR
+  # =========================================================
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: postgres-pgvector
+    restart: unless-stopped
+
+    ports:
+      - "5432:5432"
+
+    environment:
+      POSTGRES_DB: mastra
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d mastra"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - ai-stack
+
+  # =========================================================
+  # REDIS STACK
+  # =========================================================
+  redis:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    restart: unless-stopped
+
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+
+    volumes:
+      - redis_data:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - ai-stack
+
+  # =========================================================
+  # TYPESENSE
+  # =========================================================
+  typesense:
+    image: typesense/typesense:29.0
+    container_name: typesense
+    restart: unless-stopped
+
+    ports:
+      - "8108:8108"
+
+    environment:
+      TYPESENSE_API_KEY: supersecretkey
+      TYPESENSE_DATA_DIR: /data
+
+    command: >
+      --data-dir /data
+      --api-key=supersecretkey
+      --enable-cors
+
+    volumes:
+      - typesense_data:/data
+
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8108/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - ai-stack
+
+  # =========================================================
+  # TYPESENSE DASHBOARD  ← NEW: web UI for Typesense
+  # Access at http://localhost:8109
+  # Connect with: host=localhost, port=8108, API key=supersecretkey
+  # =========================================================
+  typesense-dashboard:
+    image: ghcr.io/bfritscher/typesense-dashboard:latest
+    container_name: typesense-dashboard
+    restart: unless-stopped
+
+    depends_on:
+      - typesense
+
+    ports:
+      - "8109:80"
+
+    networks:
+      - ai-stack
+
+    # =========================================================
+  # INNGEST  — upgraded from v0.27.0 + added explicit --port
+  # =========================================================
+  inngest:
+    image: inngest/inngest:v1.4.0 # ← was v0.27.0 (too old)
+    container_name: inngest
+    restart: unless-stopped
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    ports:
+      - "8288:8288"
+      - "8289:8289"
+
+    command: >
+      inngest start
+      --host 0.0.0.0
+      --port 8288
+
+    environment:
+      INNGEST_EVENT_KEY: local-event-key
+      INNGEST_SIGNING_KEY: 0123456789abcdef0123456789abcdef
+
+      INNGEST_REDIS_URI: redis://redis:6379
+
+      INNGEST_POSTGRES_URI: postgres://admin:adminpassword@postgres:5432/mastra?sslmode=disable
+
+      LOG_LEVEL: info
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8288/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+    networks:
+      - ai-stack
+
+  # =========================================================
+  # SEARXNG
+  # =========================================================
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    restart: unless-stopped
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      BASE_URL: http://localhost:8080/
+
+    volumes:
+      - searxng_data:/etc/searxng
+
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - ai-stack
+
+  # =========================================================
+  # RUSTFS  — fixed port conflict + added start command + user
+  # S3 API:     http://localhost:9100
+  # Web Console: http://localhost:9101
+  # =========================================================
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: rustfs
+    restart: unless-stopped
+
+    # user: "10001:10001" # ← RustFS runs as non-root UID 10001
+
+    ports:
+      - "9100:9000" # ← was 9000:9000 (conflicted with ClickHouse)
+      - "9101:9001" # ← was 9001:9001 (console)
+
+    environment:
+      RUSTFS_ACCESS_KEY: admin
+      RUSTFS_SECRET_KEY: adminpassword
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+
+    # command: server /data # ← required start command was missing
+
+    volumes:
+      - rustfs_data:/data
+
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9000/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - ai-stack
+
+  # =========================================================
+  # ARIZE PHOENIX (OBSERVABILITY + LLM TRACING UI)
+  # =========================================================
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: phoenix
+    restart: unless-stopped
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    ports:
+      - "6006:6006"
+
+    environment:
+      # PostgreSQL connection (uses your existing postgres service)
+      PHOENIX_SQL_DATABASE_URL: postgresql+psycopg://admin:adminpassword@postgres:5432/mastra
+
+      # optional but recommended
+      PHOENIX_ENABLE_AUTH: "false"
+      PHOENIX_WORKING_DIR: /mnt/data
+
+    volumes:
+      - phoenix_data:/mnt/data
+
+    networks:
+      - ai-stack
+
+networks:
+  ai-stack:
+    driver: bridge
+
+volumes:
+  clickhouse_data:
+  clickhouse_logs:
+  keeper_data:
+  keeper_logs:
+  postgres_data:
+  redis_data:
+  typesense_data:
+  rustfs_data:
+  searxng_data:
+  phoenix_data:

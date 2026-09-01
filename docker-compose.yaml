@@ -1,0 +1,407 @@
+version: "3.9"
+
+services:
+  # =========================================================
+  # CLICKHOUSE CONFIG INIT
+  # =========================================================
+  # clickhouse-init:
+  #   image: alpine:latest
+  #   user: root
+  #   volumes:
+  #     - ./clickhouse/config.d:/config
+  #   command:
+  #     - /bin/sh
+  #     - -c
+  #     - |
+  #       mkdir -p /config &&
+  #       printf '<clickhouse>\n  <zookeeper>\n    <node>\n      <host>clickhouse-keeper</host>\n      <port>9181</port>\n    </node>\n  </zookeeper>\n</clickhouse>\n' > /config/keeper.xml &&
+  #       echo "keeper.xml written OK" &&
+  #       cat /config/keeper.xml
+
+  #   networks:
+  #     - ai-stack
+
+  # =========================================================
+  # CLICKHOUSE KEEPER
+  # =========================================================
+  # clickhouse-keeper:
+  #   image: clickhouse/clickhouse-keeper:latest
+  #   container_name: clickhouse-keeper
+  #   restart: unless-stopped
+
+  #   ports:
+  #     - "9181:9181"
+
+  #   volumes:
+  #     - keeper_data:/var/lib/clickhouse
+  #     - keeper_logs:/var/log/clickhouse-keeper
+
+  #   networks:
+  #     - ai-stack
+
+  # =========================================================
+  # CLICKHOUSE
+  # =========================================================
+  # clickhouse:
+  #   image: clickhouse/clickhouse-server:latest
+  #   container_name: clickhouse
+  #   restart: unless-stopped
+
+  #   depends_on:
+  #     clickhouse-keeper: # ← consistent map syntax
+  #       condition: service_started
+
+  #   ports:
+  #     - "8123:8123"
+  #     - "9000:9000"
+
+  #   environment:
+  #     CLICKHOUSE_DB: mastra
+  #     CLICKHOUSE_USER: admin
+  #     CLICKHOUSE_PASSWORD: adminpassword
+  #     CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+
+  #   volumes:
+  #     - clickhouse_data:/var/lib/clickhouse
+  #     - clickhouse_logs:/var/log/clickhouse-server
+  #     - ./clickhouse/config.d/keeper.xml:/etc/clickhouse-server/config.d/keeper.xml:ro
+
+  #   ulimits:
+  #     nofile:
+  #       soft: 262144
+  #       hard: 262144
+
+  #   healthcheck:
+  #     test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+
+  #   networks:
+  #     - ai-stack
+
+  # =========================================================
+  # POSTGRES + PGVECTOR
+  # =========================================================
+  # postgres:
+  #   image: pgvector/pgvector:pg16
+  #   container_name: postgres-pgvector
+  #   restart: unless-stopped
+
+  #   ports:
+  #     - "5432:5432"
+
+  #   environment:
+  #     POSTGRES_DB: mastra
+  #     POSTGRES_USER: admin
+  #     POSTGRES_PASSWORD: adminpassword
+
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U admin -d mastra"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+
+  #   networks:
+  #     - ai-stack
+
+  # =========================================================
+  # REDIS STACK
+  # =========================================================
+  # redis:
+  #   image: redis/redis-stack:latest
+  #   container_name: redis-stack
+  #   restart: unless-stopped
+
+  #   ports:
+  #     - "6379:6379"
+  #     - "8001:8001"
+
+  #   volumes:
+  #     - redis_data:/data
+
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+
+  #   networks:
+  #     - ai-stack
+
+  # =========================================================
+  # RUSTFS
+  # =========================================================
+  # rustfs:
+  # image: rustfs/rustfs:latest
+  # image: rustfs/rustfs:1.0.0-alpha.99
+  # container_name: rustfs
+  # restart: unless-stopped
+
+  # ports:
+  #   - "9100:9000"
+  #   - "9101:9001"
+
+  # environment:
+  #   RUSTFS_ACCESS_KEY: admin
+  #   RUSTFS_SECRET_KEY: adminpassword
+  #   RUSTFS_ADDRESS: 0.0.0.0:9000
+  #   RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+  #   RUSTFS_CONSOLE_ENABLE: "true"
+
+  # volumes:
+  #   - rustfs_data:/data
+
+  # networks:
+  #   - ai-stack
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: livekit
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+    # ports:
+    #   - "7880:7880" # HTTP/WS signaling
+    #   - "7881:7881" # RTC over TCP fallback
+    #   - "50000-50100:50000-50100/udp" # WebRTC media (narrow this in prod)
+    network_mode: host
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+
+    # networks:
+    #   - ai-stack
+
+  kokoro-tts:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest # swap to -gpu if you have an NVIDIA card
+    container_name: kokoro-tts
+    restart: unless-stopped
+    ports:
+      - "8880:8880"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8880/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - ai-stack
+
+  whisper-stt:
+    image: hwdsl2/whisper-server:latest
+    container_name: whisper-stt
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      - WHISPER_API_KEY=
+    volumes:
+      - whisper-data:/var/lib/whisper
+    networks:
+      - ai-stack
+  # =========================================================
+  # TYPESENSE
+  # =========================================================
+  # typesense:
+  #   image: typesense/typesense:29.0
+  #   container_name: typesense
+  #   restart: unless-stopped
+
+  #   ports:
+  #     - "8108:8108"
+
+  #   environment:
+  #     TYPESENSE_API_KEY: supersecretkey
+  #     TYPESENSE_DATA_DIR: /data
+
+  #   command: >
+  #     --data-dir /data
+  #     --api-key=supersecretkey
+  #     --enable-cors
+
+  #   volumes:
+  #     - typesense_data:/data
+
+  #   networks:
+  #     - ai-stack
+
+  # =========================================================
+  # TYPESENSE DASHBOARD
+  # =========================================================
+  # typesense-dashboard:
+  #   image: ghcr.io/bfritscher/typesense-dashboard:latest
+  #   container_name: typesense-dashboard
+  #   restart: unless-stopped
+
+  #   depends_on:
+  #     - typesense
+
+  #   ports:
+  #     - "8109:80"
+
+  #   networks:
+  #     - ai-stack
+
+  # =========================================================
+  # INNGEST
+  # =========================================================
+  # inngest:
+  #   image: inngest/inngest:v1.4.0
+  #   container_name: inngest
+  #   restart: unless-stopped
+
+  #   depends_on:
+  #     - postgres
+  #     - redis
+
+  #   ports:
+  #     - "8288:8288"
+  #     - "8289:8289"
+
+  #   command: >
+  #     inngest start
+  #     --host 0.0.0.0
+  #     --port 8288
+
+  #   environment:
+  #     INNGEST_EVENT_KEY: local-event-key
+  #     INNGEST_SIGNING_KEY: 0123456789abcdef0123456789abcdef
+  #     INNGEST_REDIS_URI: redis://redis:6379
+  #     INNGEST_POSTGRES_URI: postgres://admin:adminpassword@postgres:5432/mastra?sslmode=disable
+  #     LOG_LEVEL: info
+
+  #   networks:
+  #     - ai-stack
+
+  # =========================================================
+  # SEARXNG
+  # =========================================================
+  # searxng:
+  #   image: searxng/searxng:latest
+  #   container_name: searxng
+  #   restart: unless-stopped
+
+  #   ports:
+  #     - "8080:8080"
+
+  #   environment:
+  #     BASE_URL: http://localhost:8080/
+  #     SEARXNG_SECRET_KEY: "changeme-use-a-long-random-string-here" # ← was missing
+
+  #   volumes:
+  #     - ./searxng/settings.yml:/etc/searxng/settings.yml:ro # ← mount config
+  #     - searxng_data:/etc/searxng
+
+  #   cap_drop:
+  #     - ALL
+  #   cap_add:
+  #     - CHOWN
+  #     - SETGID
+  #     - SETUID
+
+  #   healthcheck:
+  #     test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080"]
+  #     interval: 20s
+  #     timeout: 5s
+  #     retries: 10
+
+  #   networks:
+  #     - ai-stack
+
+  # =========================================================
+  # ARIZE PHOENIX
+  # UI:        http://localhost:6006
+  # OTLP HTTP: http://localhost:6006/v1/traces
+  # OTLP gRPC: http://localhost:4317
+  # =========================================================
+  # phoenix:
+  #   # image: arizephoenix/phoenix:latest
+  #   image: arizephoenix/phoenix:15.10.0
+  #   container_name: phoenix
+  #   restart: unless-stopped
+  #   user: root # ← fixes [Errno 13] Permission denied on /mnt/data
+
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy # ← waits for postgres to actually be ready
+
+  #   ports:
+  #     - "6006:6006" # UI + OTLP HTTP collector
+  #     - "4317:4317" # OTLP gRPC collector  ← was missing
+
+  #   environment:
+  #     PHOENIX_SQL_DATABASE_URL: postgresql://admin:adminpassword@postgres:5432/mastra
+  #     PHOENIX_WORKING_DIR: /mnt/data
+  #     PHOENIX_ENABLE_AUTH: "false"
+  #     PHOENIX_PORT: "6006"
+  #     PHOENIX_GRPC_PORT: "4317"
+
+  #   volumes:
+  #     - phoenix_data:/mnt/data
+
+  #   networks:
+  #     - ai-stack
+
+  # =========================================================
+  # DOCLING SERVE
+  # =========================================================
+  # docling:
+  #   image: quay.io/docling-project/docling-serve:latest
+  #   container_name: docling
+  #   restart: unless-stopped
+
+  #   ports:
+  #     - "8090:5001"
+
+  #   shm_size: "4gb"
+
+  #   mem_limit: 8g
+  #   # cpus: 2.0
+
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "50m"
+  #       max-file: "3"
+
+  #   environment:
+  #     DOCLING_SERVE_ENABLE_UI: "true"
+  #     DOCLING_SERVE_MAX_SYNC_WAIT: "600"
+  #     DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "false"
+  #     DOCLING_OCR_ENABLED: "false"
+
+  #   volumes:
+  #     - docling_data:/data
+  #     - docling_cache:/root/.cache
+  #     - docling_models:/models
+
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -fs http://localhost:5001/health || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 15s
+
+  #   networks:
+  #     - ai-stack
+
+networks:
+  ai-stack:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  rustfs_data:
+  whisper-data:
+  # clickhouse_data:
+  # clickhouse_logs:
+  # keeper_data:
+  # keeper_logs:
+  # typesense_data:
+  # searxng_data:
+  # phoenix_data:
+  # docling_data:
+  # docling_cache:
+  # docling_models:
