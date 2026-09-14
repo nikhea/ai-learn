@@ -95,8 +95,8 @@ export const chatBotAgent = new Agent({
           model: "openrouter/openrouter/free",
 
           instructions:
-            `Generate a concise title for this related conversation. 
-                     it should be less than 5 words and capture the main 
+            `Generate a concise title for this related conversation.
+                     it should be less than 5 words and capture the main
                      topic or purpose of the conversation. remember,the conversation is related to file system operations,
                       so the title should reflect that context. and not more then than 5 words.`.trim(),
         },
@@ -106,27 +106,27 @@ export const chatBotAgent = new Agent({
           schema: userProfileSchema,
           agentManaged: true,
         },
-        // observationalMemory: {
-        //   model: "ollama-cloud/minimax-m2.5",
-        //   scope: "thread",
-        //   temporalMarkers: true,
-        //   activateOnProviderChange: true,
-        //   enabled: true,
-        //   retrieval: {
-        //     vector: true,
-        //     scope: "resource",
-        //   },
-        //   observation: {
-        //     manageWorkingMemory: true,
-        //     activateAfterIdle: "auto",
-        //     bufferOnIdle: true,
-        //     extract: [createConversationFactsExtractor(logger)],
-        //   },
-        //   reflection: {
-        //     activateOnProviderChange: true,
-        //     activateAfterIdle: "10m",
-        //   },
-        // },
+        observationalMemory: {
+          model: "ollama-cloud/minimax-m2.5",
+          scope: "thread",
+          temporalMarkers: true,
+          activateOnProviderChange: true,
+          enabled: true,
+          retrieval: {
+            vector: true,
+            scope: "resource",
+          },
+          observation: {
+            manageWorkingMemory: true,
+            activateAfterIdle: "auto",
+            bufferOnIdle: true,
+            extract: [createConversationFactsExtractor(logger)],
+          },
+          reflection: {
+            activateOnProviderChange: true,
+            activateAfterIdle: "10m",
+          },
+        },
       },
     });
   },
