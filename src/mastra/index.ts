@@ -70,7 +70,7 @@ import { resolveModelConfig } from "@mastra/core/llm";
 
 const x = new AgentsMDInjector({});
 
-// const slack = new SlackProvider()
+const slack = new SlackProvider()
 
 // const result = await slack.connect('my-agent', {
 //   slashCommands
