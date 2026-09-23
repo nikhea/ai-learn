@@ -13,10 +13,9 @@ export const startScheduleTool = createTool({
   execute: async ({ schedule, prompt, recurring }, { mastra, agent }) => {
     if (!agent?.threadId || !agent.resourceId) {
       throw new Error(
-        "A threadId and resourceId are required to create a schedule.",
+        "A threadId and resourceId are required to create a schedules.",
       );
     }
-
     return mastra!.schedules.create({
       agentId: agent.agentId,
       cron: schedule,
