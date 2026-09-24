@@ -12,7 +12,6 @@ async function slackFetch(method: string, params: Record<string, string> = {}) {
   if (!data.ok) throw new Error(`Slack API ${method} failed: ${data.error}`);
   return data;
 }
-
 // Cache user ID -> display name lookups for the process lifetime
 const userNameCache = new Map<string, string>();
 
