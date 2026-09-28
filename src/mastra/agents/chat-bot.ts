@@ -27,7 +27,6 @@ import {
 import { webFetchTool } from "../tools/web-fetch-tool";
 
 const workspacePath = "workspace";
-
 const workspace = new Workspace({
   id: "chat-bot-agent-workspace",
   name: "Chat Bot Agent Workspace",
