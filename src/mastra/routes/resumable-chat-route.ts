@@ -287,7 +287,7 @@ export const resumableChatStopRoute = registerApiRoute(
         const { cleanup } = await durableLongformAgent.observe(runId);
 
         // Calling cleanup() destroys the run's cached events and registry entries,
-        // preventing further streaming or resumption.
+        // preventing further streaming or resumption.s
         cleanup();
 
         return c.json({ success: true, message: "Stream stopped." });
